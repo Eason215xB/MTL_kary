@@ -1,0 +1,52 @@
+{
+    "DEVICE": "cuda",
+    "EPOCHS": 50,
+    "BATCH_SIZE": 4,
+    "NUM_WORKERS": 4,
+    "LR": 2e-5,
+    "WEIGHT_DECAY": 1e-4,
+    "SCHEDULER_STEP": 20,
+    "SCHEDULER_GAMMA": 0.1,
+    "IMG_SIZE": [
+        224,
+        224
+    ],
+    "NORM_MEAN": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "NORM_STD": [
+        1.0,
+        1.0,
+        1.0
+    ],
+    "DATA_PATHS": {
+        "TRAIN_ANN_FILE": "/mnt/afs/yxb/kary-datasets/waizhou/keypoint-origin-data/王老师数据第一批排列图/3_kpts_rotate/annotations/instances_extracted.json",
+        "TRAIN_IMG_DIR": "/mnt/afs/yxb/kary-datasets/waizhou/keypoint-origin-data/王老师数据第一批排列图/3_kpts_rotate/images",
+        "VAL_ANN_FILE": "/mnt/afs/yxb/kary-datasets/waizhou/keypoint-origin-data/北昂外周血排列图0523/3_kpts_rotate/annotations/instances_extracted.json",
+        "VAL_IMG_DIR": "/mnt/afs/yxb/kary-datasets/waizhou/keypoint-origin-data/北昂外周血排列图0523/3_kpts_rotate/images"
+    },
+    "MODEL_PARAMS": {
+        "SEG_NUM_CLASSES": 26,
+        "POSE_NUM_KEYPOINTS": 3,
+        "NUM_QUERIES": 100,
+        "POSE_SIMCC_RATIO": 2.0
+    },
+    "LOSS_WEIGHTS": {
+        "COST_CLASS": 2.0,
+        "COST_MASK": 5.0,
+        "COST_DICE": 5.0,
+        "w_seg_cls": 2.0,
+        "w_seg_mask": 5.0,
+        "w_seg_dice": 5.0,
+        "w_pose": 0.2
+    },
+    "POSE_PARAMS": {
+        "BETA": 1.0,
+        "LABEL_SOFTMAX": false
+    },
+    "CHECKPOINT_PATH": "./outputs/checkpoints",
+    "PRETRAINED_PATH": "/home/yxb/project/MTL_kary/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth",
+    "GRAD_CLIP_NORM": 1.0
+}

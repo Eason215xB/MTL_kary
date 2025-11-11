@@ -1,0 +1,211 @@
+{
+  "info": {
+    "contributor": "Test",
+    "date_created": "2025-11-08",
+    "description": "Test JSON for Chromosome MTL",
+    "url": "",
+    "version": "1.0",
+    "year": "2025"
+  },
+  "licenses": [
+    {
+      "name": "",
+      "id": 0,
+      "url": ""
+    }
+  ],
+  "images": [
+    {
+      "id": 32,
+      "file_name": "test_image.jpg",
+      "width": 1920,
+      "height": 1080
+    }
+  ],
+  "categories": [
+    {
+      "id": 1, "name": "1", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 2, "name": "2", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 3, "name": "3", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 4, "name": "4", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 5, "name": "5", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 6, "name": "6", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 7, "name": "7", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 8, "name": "8", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 9, "name": "9", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 10, "name": "10", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 11, "name": "11", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 12, "name": "12", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 13, "name": "13", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 14, "name": "14", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 15, "name": "15", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 16, "name": "16", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 17, "name": "17", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 18, "name": "18", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 19, "name": "19", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 20, "name": "20", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 21, "name": "21", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 22, "name": "22", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 23, "name": "X", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    },
+    {
+      "id": 24, "name": "Y", "supercategory": "chromosome",
+      "keypoints": ["head", "cen", "tail"],
+      "skeleton": [[2, 3], [1, 2]]
+    }
+  ],
+  "annotations": [
+    {
+      "id": 1431,
+      "image_id": 32,
+      "category_id": 1,
+      "segmentation": [
+        [
+          1163.8, 489.69,
+          1175.43, 489.69,
+          1175.43, 594.4,
+          1163.8, 594.4,
+          1163.8, 489.69
+        ]
+      ],
+      "area": 1217.777300000011,
+      "bbox": [
+        1163.8,
+        489.69,
+        11.63,
+        104.71
+      ],
+      "iscrowd": 0,
+      "attributes": {
+        "occluded": false
+      },
+      "keypoints": [
+        1163.8, 489.69, 2,
+        1165.5, 538.92, 2,
+        1175.43, 594.4, 2
+      ],
+      "num_keypoints": 3
+    },
+    {
+      "id": 1432,
+      "image_id": 32,
+      "category_id": 2,
+      "segmentation": [
+        [
+          800.0, 200.0,
+          815.0, 200.0,
+          815.0, 310.0,
+          800.0, 310.0,
+          800.0, 200.0
+        ]
+      ],
+      "area": 1650.0,
+      "bbox": [
+        800.0,
+        200.0,
+        15.0,
+        110.0
+      ],
+      "iscrowd": 0,
+      "attributes": {
+        "occluded": false
+      },
+      "keypoints": [
+        805.0, 210.0, 2,
+        805.0, 220.0, 2,
+        805.0, 250.0, 2
+      ],
+      "num_keypoints": 3
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+Epoch: 1, TrainLoss: 673.5184, ValLoss: 184.2612, LR: 0.000200
+Epoch: 2, TrainLoss: 258.9342, ValLoss: 165.9954, LR: 0.000200
+Epoch: 3, TrainLoss: 185.9210, ValLoss: 160.8207, LR: 0.000200
+Epoch: 4, TrainLoss: 164.2113, ValLoss: 164.9939, LR: 0.000200
+Epoch: 5, TrainLoss: 165.6588, ValLoss: 165.6499, LR: 0.000200
+Epoch: 6, TrainLoss: 177.9189, ValLoss: 172.4831, LR: 0.000200
+Epoch: 7, TrainLoss: 170.4956, ValLoss: 168.7088, LR: 0.000200
+Epoch: 8, TrainLoss: 163.4878, ValLoss: 163.5042, LR: 0.000200
+Epoch: 9, TrainLoss: 161.7511, ValLoss: 160.7022, LR: 0.000200
+Epoch: 10, TrainLoss: 162.6997, ValLoss: 160.2300, LR: 0.000200
+Epoch: 11, TrainLoss: 162.4653, ValLoss: 161.5288, LR: 0.000200
+Epoch: 12, TrainLoss: 162.0720, ValLoss: 160.4756, LR: 0.000200
