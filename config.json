@@ -40,10 +40,10 @@
         "w_seg_cls": 2.0,
         "w_seg_mask": 5.0,
         "w_seg_dice": 5.0,
-        "w_pose": 0.2
+        "w_pose": 0.02
     },
     "POSE_PARAMS": {
-        "BETA": 1.0,
+        "BETA": 15.0,
         "LABEL_SOFTMAX": false
     },
     "CHECKPOINT_PATH": "./outputs/checkpoints",
