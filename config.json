@@ -44,7 +44,7 @@
     },
     "POSE_PARAMS": {
         "BETA": 15.0,
-        "LABEL_SOFTMAX": false
+        "LABEL_SOFTMAX": true
     },
     "CHECKPOINT_PATH": "./outputs/checkpoints",
     "PRETRAINED_PATH": "/home/yxb/project/MTL_kary/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth",
