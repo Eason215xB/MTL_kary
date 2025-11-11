@@ -101,7 +101,8 @@ class ChromosomeMTLModel(nn.Module):
             in_hidden_dim=pafpn_hidden_dim, # 256
             num_keypoints=pose_num_keypoints,
             simcc_dims=(W_s, H_s),
-            gau_cfg=gau_cfg_for_pose
+            gau_cfg=gau_cfg_for_pose,
+            kpt_feat_dims=128
         )
 
     def forward(self, img: torch.Tensor, img_metas: List[Dict] = None) -> Dict[str, torch.Tensor]:
