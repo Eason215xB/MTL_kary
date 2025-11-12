@@ -28,19 +28,15 @@
         "VAL_IMG_DIR": "/mnt/afs/yxb/kary-datasets/waizhou/keypoint-origin-data/北昂外周血排列图0523/3_kpts_rotate/images"
     },
     "MODEL_PARAMS": {
-        "SEG_NUM_CLASSES": 26,
+        "SEG_NUM_CLASSES": 27, 
         "POSE_NUM_KEYPOINTS": 3,
         "NUM_QUERIES": 100,
         "POSE_SIMCC_RATIO": 2.0
     },
     "LOSS_WEIGHTS": {
-        "COST_CLASS": 2.0,
-        "COST_MASK": 5.0,
-        "COST_DICE": 5.0,
-        "w_seg_cls": 2.0,
-        "w_seg_mask": 5.0,
-        "w_seg_dice": 5.0,
-        "w_pose": 0.02
+        "w_seg_ce": 1.0,
+        "w_seg_dice": 1.0,
+        "w_pose": 1.0
     },
     "POSE_PARAMS": {
         "BETA": 15.0,
