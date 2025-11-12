@@ -19,12 +19,9 @@ from typing import Dict, List, Tuple
 import cv2
 import numpy as np
 
-# ----------------------------
-# 1. 导入你的所有自定义模块
-# ----------------------------
 from model.MTL_model import ChromosomeMTLModel
 from MTL_datasets import CocoMtlDataset, mtl_collate_fn
-from utils.loss import MTLAllLosses, HungarianMatcher
+from utils.loss import MTLAllLosses
 
 
 class MeanMetric:
@@ -202,8 +199,7 @@ def train_one_epoch(
         if rank == 0:
             pbar.set_postfix(
                 loss=f"{total_loss_batch.item():.4f}",
-                seg_cls=f"{losses['seg_loss_class'].item():.4f}",
-                seg_mask=f"{losses['seg_loss_mask'].item():.4f}",
+                seg_ce=f"{losses['seg_loss_ce'].item():.4f}",
                 seg_dice=f"{losses['seg_loss_dice'].item():.4f}",
                 pose=f"{losses['pose_loss'].item():.4f}"
             )
@@ -248,31 +244,13 @@ def validate(
         losses = loss_fn(outputs, targets_list_device)
         val_loss.update(losses['total_loss'].item(), n=images.shape[0])
         
-        # 2. 运行匹配器以获取索引
-        matcher_outputs = {
-            "class_logits": outputs["seg_class_logits"],
-            "mask_logits": outputs["seg_mask_logits"]
-        }
-        indices = loss_fn.matcher(matcher_outputs, targets_list_device)
-        
-        src_idx = _get_src_permutation_idx(indices)
-        tgt_idx = _get_tgt_permutation_idx(indices)
-        
-        num_matched = src_idx[0].shape[0]
-        
-        # [!! 调试信息 !!]
-        # if rank == 0 and torch.rand(1).item() < 0.05:  # 5%概率打印调试信息
-        #     total_instances = sum(len(t['labels']) for t in targets_list_device)
-        #     print(f"[调试-匹配] 批次中总实例数: {total_instances}, 匹配实例数: {num_matched}")
-        #     print(f"[调试-匹配] src_idx: {src_idx[1][:10] if len(src_idx[1]) > 10 else src_idx[1]}")  # 只显示前10个
-        #     print(f"[调试-匹配] tgt_idx: {tgt_idx[1][:10] if len(tgt_idx[1]) > 10 else tgt_idx[1]}")  # 只显示前10个
             
         # 3. 计算分割指标 (mIoU, mAcc)
-        B, Nq, H, W = outputs['seg_mask_logits'].shape
-        C = num_classes
-        class_probs = F.softmax(outputs["seg_class_logits"][..., :-1], dim=-1)
-        sem_mask_probs = torch.einsum('bqc,bqhw->bchw', class_probs, outputs['seg_mask_logits'].sigmoid())
-        sem_pred = sem_mask_probs.argmax(dim=1)
+        seg_logits = outputs["seg_logits"]
+        B, C, H, W = seg_logits.shape
+        
+        # (B, H, W)
+        sem_pred = seg_logits.argmax(dim=1) 
 
         sem_gt = torch.zeros((B, H, W), dtype=torch.long, device=device)
         for b_idx in range(B):
@@ -280,84 +258,69 @@ def validate(
             gt_masks_b = targets_list_device[b_idx]['masks']
             for i in range(len(gt_labels_b)):
                 label_idx = gt_labels_b[i]
-                if 0 <= label_idx < num_classes:
+                if 0 < label_idx < num_classes: # 假设 0 是背景
                     sem_gt[b_idx][gt_masks_b[i] > 0] = label_idx
         
         conf_matrix.update(sem_pred, sem_gt)
 
         # 4. 计算姿态指标 (PCK, AUC)
-        B, Nq, K, Ws = outputs['pose_pred_x'].shape
-        _, _, _, Hs = outputs['pose_pred_y'].shape
-        
+        # [!! 最终修复 !!] RTMCCHeadKary 输出 (B, K, ...), 不再使用 'indices'
+        B, K, Ws = outputs['pose_pred_x'].shape
+        _, _, Hs = outputs['pose_pred_y'].shape
+
+        # pred_kpts_all 形状: (B, K, 2)
         pred_kpts_all = decode_simcc_batch(
-            outputs['pose_pred_x'].reshape(B*Nq, K, Ws), 
-            outputs['pose_pred_y'].reshape(B*Nq, K, Hs), 
+            outputs['pose_pred_x'], 
+            outputs['pose_pred_y'], 
             simcc_ratio
         )
-        pred_kpts_all = pred_kpts_all.reshape(B, Nq, K, 2)
         
-
-        if num_matched > 0:
-            src_kpts = pred_kpts_all[src_idx] 
-            
+        # [!! 修复 !!] 直接使用 pred_kpts_all 作为 src_kpts
+        src_kpts = pred_kpts_all
+        
+        # [!! 修复 !!] 从 targets 'cat' GT
+        # 假设 N_gt=1
+        try:
+            # (B * N_gt, 4) -> (B, 4)
             gt_bboxes_all = torch.cat([t["bboxes"] for t in targets_list_device], dim=0)
-            gt_pose_x_all = torch.cat([t["pose_targets_x"] for t in targets_list_device], dim=0)
-            gt_pose_y_all = torch.cat([t["pose_targets_y"] for t in targets_list_device], dim=0)
-            gt_pose_w_all = torch.cat([t["pose_weights"] for t in targets_list_device], dim=0)
+            # (B * N_gt, K, 3) -> (B, K, 3)
+            gt_kpts_raw_all = torch.cat([t["pose_kpts_aug"] for t in targets_list_device], dim=0)
             
-            if rank == 0 and torch.rand(1).item() < 0.02:  # 2%概率打印调试信息
-                print(f"[调试-网络输出] pred_kpts_all.shape: {pred_kpts_all.shape}")
-                # 检查网络原始输出
-                pose_pred_x_sample = outputs['pose_pred_x'][0, :3, 0, :]  # 第一个样本，前3个查询，第一个关键点
-                pose_pred_y_sample = outputs['pose_pred_y'][0, :3, 0, :]  
-                print(f"[调试-网络输出] pose_pred_x前3个查询的logits范围: [{pose_pred_x_sample.min():.3f}, {pose_pred_x_sample.max():.3f}]")
-                print(f"[调试-网络输出] pose_pred_y前3个查询的logits范围: [{pose_pred_y_sample.min():.3f}, {pose_pred_y_sample.max():.3f}]")
-                # 检查softmax后的分布
-                x_probs = F.softmax(pose_pred_x_sample, dim=-1)
-                y_probs = F.softmax(pose_pred_y_sample, dim=-1)
-                x_entropy = -(x_probs * torch.log(x_probs + 1e-8)).sum(dim=-1).mean()
-                y_entropy = -(y_probs * torch.log(y_probs + 1e-8)).sum(dim=-1).mean()
-                print(f"[调试-网络输出] X/Y概率分布熵: {x_entropy:.3f}, {y_entropy:.3f} (熵越低越集中)")
-                print("-" * 40)
-            
-            tgt_kpts_x = gt_pose_x_all[tgt_idx[1]]
-            tgt_kpts_y = gt_pose_y_all[tgt_idx[1]]
-            tgt_kpts_vis = gt_pose_w_all[tgt_idx[1]] 
-            tgt_bboxes = gt_bboxes_all[tgt_idx[1]] 
-            
-            # [!! 修复 !!] 直接使用原始GT坐标，不要解码SimCC目标
-            gt_kpts_raw = torch.cat([t["pose_kpts_aug"] for t in targets_list_device], dim=0)
-            gt_kpts = gt_kpts_raw[tgt_idx[1]][:, :, :2]  # 只取x,y坐标，去掉visibility 
+            if gt_bboxes_all.shape[0] == 0 or gt_kpts_raw_all.shape[0] == 0:
+                # 匹配实例数 (num_matched) 在这个上下文中是 B
+                num_matched = 0 
+            else:
+                num_matched = gt_bboxes_all.shape[0]
+                
+        except RuntimeError: # 捕获 cat 空列表的错误
+            num_matched = 0
+
+        if num_matched > 0 and num_matched == src_kpts.shape[0]:
+            # (B, K, 2)
+            gt_kpts = gt_kpts_raw_all[:, :, :2]
+            # (B, K)
+            tgt_kpts_vis = gt_kpts_raw_all[:, :, 2]
+            # (B, 4)
+            tgt_bboxes = gt_bboxes_all
             
             pck_values, auc_value = compute_pck_auc_normalized(
                 src_kpts, gt_kpts, tgt_kpts_vis, tgt_bboxes, pck_thresholds
             )
             
             num_visible_kpts = tgt_kpts_vis.sum().item()
-            
 
-            # if rank == 0 and torch.rand(1).item() < 0.05:  # 5%概率打印调试信息
-            #     print(f"[调试-可见性] tgt_kpts_vis.shape: {tgt_kpts_vis.shape}")
-            #     print(f"[调试-可见性] num_visible_kpts: {num_visible_kpts}")
-            #     print(f"[调试-可见性] 匹配实例数: {num_matched}, 每实例关键点数: {tgt_kpts_vis.shape[1] if len(tgt_kpts_vis.shape) > 1 else 'N/A'}")
-            #     print(f"[调试-可见性] tgt_kpts_vis前几行: {tgt_kpts_vis[:3] if len(tgt_kpts_vis) > 0 else 'empty'}")
-            
             if num_visible_kpts > 0:
-                # [!! 修复后的调试信息 !!]
-                if rank == 0 and torch.rand(1).item() < 0.05:  # 5%概率打印调试信息
+                # [!! 调试信息 !!]
+                if rank == 0 and torch.rand(1).item() < 0.05:
                     distances = torch.sqrt(((src_kpts - gt_kpts)**2).sum(dim=-1))
-                    # 计算bbox尺寸用于调试
                     gt_bboxes_wh = tgt_bboxes[:, 2:4] - tgt_bboxes[:, 0:2]
                     norm_scale = torch.max(gt_bboxes_wh, dim=1)[0].unsqueeze(1)
                     normalized_distances = distances / (norm_scale + 1e-6)
                     
-                    print(f"[调试-修复后] 匹配实例数: {num_matched}, 可见关键点数: {num_visible_kpts}")
-                    print(f"[调试-修复后] 预测坐标范围: x=[{src_kpts[:,:,0].min():.1f}, {src_kpts[:,:,0].max():.1f}], y=[{src_kpts[:,:,1].min():.1f}, {src_kpts[:,:,1].max():.1f}]")
-                    print(f"[调试-修复后] GT坐标范围: x=[{gt_kpts[:,:,0].min():.1f}, {gt_kpts[:,:,0].max():.1f}], y=[{gt_kpts[:,:,1].min():.1f}, {gt_kpts[:,:,1].max():.1f}]")
-                    print(f"[调试-修复后] 像素距离范围: [{distances.min():.2f}, {distances.max():.2f}]")
-                    print(f"[调试-修复后] Bbox尺寸: {gt_bboxes_wh.max(dim=1)[0]}")
-                    print(f"[调试-修复后] 归一化距离范围: [{normalized_distances.min():.4f}, {normalized_distances.max():.4f}]")
-                    print(f"[调试-修复后] PCK@0.5: {pck_values[3].item():.4f}")
+                    print(f"[调试-解耦后] 批次实例数: {num_matched}, 可见关键点数: {num_visible_kpts}")
+                    print(f"[调试-解耦后] 预测坐标范围: x=[{src_kpts[:,:,0].min():.1f}, {src_kpts[:,:,0].max():.1f}], y=[{src_kpts[:,:,1].min():.1f}, {src_kpts[:,:,1].max():.1f}]")
+                    print(f"[调试-解耦后] GT坐标范围: x=[{gt_kpts[:,:,0].min():.1f}, {gt_kpts[:,:,0].max():.1f}], y=[{gt_kpts[:,:,1].min():.1f}, {gt_kpts[:,:,1].max():.1f}]")
+                    print(f"[调试-解耦后] 归一化距离范围: [{normalized_distances.min():.4f}, {normalized_distances.max():.4f}]")
                     print("="*60)
                 
                 for i in range(len(pck_thresholds)):
@@ -501,7 +464,6 @@ def main_worker(rank: int, world_size: int, config: Dict):
     num_seg_classes = config['MODEL_PARAMS']['SEG_NUM_CLASSES']
     model = ChromosomeMTLModel(
         img_size=(IMG_H, IMG_W),
-        num_queries=config['MODEL_PARAMS']['NUM_QUERIES'],
         seg_num_classes=num_seg_classes,
         pose_num_keypoints=config['MODEL_PARAMS']['POSE_NUM_KEYPOINTS'],
         pose_simcc_ratio=config['MODEL_PARAMS']['POSE_SIMCC_RATIO']
@@ -566,18 +528,13 @@ def main_worker(rank: int, world_size: int, config: Dict):
     model = DDP(model, device_ids=[rank],find_unused_parameters=True)
 
     # 6. 初始化损失函数
-    matcher = HungarianMatcher(
-        cost_class=config['LOSS_WEIGHTS']['COST_CLASS'],
-        cost_mask=config['LOSS_WEIGHTS']['COST_MASK'],
-        cost_dice=config['LOSS_WEIGHTS']['COST_DICE']
-    )
     loss_fn = MTLAllLosses(
         num_classes=num_seg_classes,
-        matcher=matcher,
         weights=config['LOSS_WEIGHTS'],
         pose_beta=config.get('POSE_PARAMS', {}).get('BETA', 1.0),
         pose_label_softmax=config.get('POSE_PARAMS', {}).get('LABEL_SOFTMAX', False)
     ).to(device)
+
 
     # 7. 初始化优化器和调度器
     optimizer = optim.AdamW(
